@@ -14,9 +14,14 @@ class EventSchedule extends StatefulWidget {
 class _EventScheduleState extends State<EventSchedule> {
   final _formKey = GlobalKey<FormState>(); // Key for the form validation
   final _titleController =
-      TextEditingController(); // A controller for the title input
+      TextEditingController(); //
+  final _emailController = TextEditingController();// A controller for the title input
+  String lastValue = '';
+  List<String> emails = [];
+  FocusNode focus = FocusNode();
   late DateTime fromDate;
   late DateTime toDate;
+  bool _isSelected = false;
 
   @override
   void initState() {
@@ -35,6 +40,7 @@ class _EventScheduleState extends State<EventSchedule> {
     super.dispose();
   }
 
+  //TODO: Save the schedule data in the model and display it on main page
   // Builds the EventSchedule page view
   @override
   Widget build(BuildContext context) {
@@ -54,7 +60,11 @@ class _EventScheduleState extends State<EventSchedule> {
               SizedBox(
                 width: 12,
               ),
-              selectData()
+              selectData(),
+              SizedBox(
+                width: 12,
+              ),
+              emailInput('wesleypizetta@hotmail.com', Color(0xFFff6666))
             ],
           ),
         ),
@@ -82,31 +92,173 @@ class _EventScheduleState extends State<EventSchedule> {
   // Data selectors widget. Here we call both fromDateSelect and toDateSelect
   Widget selectData() {
     return Column(
-      children: [fromDateSelect()],
+      children: [fromDropdown(), toDropdown()],
     );
   }
 
   // "From" date selector widget
-  Widget fromDateSelect() {
-    return Row(children: [
-      Expanded(
-        child: dropdownButton(text: Utils.toDate(fromDate)),
-      )
-    ]);
+  Widget fromDropdown() {
+    return buildHeader(
+        headerTitle: 'FROM',
+        child: Row(children: [
+          Expanded(
+            flex: 2,
+            child: dropdownButton(
+                text: Utils.toDate(fromDate),
+                onClicked: () => selectFromDateTime(selectDate: true)),
+          ),
+          Expanded(
+            child: dropdownButton(
+                text: Utils.toTime(fromDate),
+                onClicked: () => selectFromDateTime(selectDate: false)),
+          ),
+        ]));
   }
 
   // "To" date selector widget
-  Widget toDateSelect() {
-    return Row(children: [
-      Expanded(
-        child: dropdownButton(text: Utils.toDate(fromDate)),
-      )
-    ]);
+  Widget toDropdown() {
+    return buildHeader(
+        headerTitle: 'TO',
+        child: Row(children: [
+          Expanded(
+            flex: 2,
+            child: dropdownButton(text: Utils.toDate(toDate), onClicked: () => selectToDateTime(selectDate: true)),
+          ),
+          Expanded(
+            child: dropdownButton(text: Utils.toTime(toDate), onClicked: () => selectToDateTime(selectDate: false)),
+          )
+        ]));
   }
 
+  Future selectFromDateTime({required bool selectDate}) async {
+    final date = await selectDateTime(fromDate, selectDate: selectDate);
+
+    if(date == null) return;
+
+    if(date.isAfter(toDate)) {
+      toDate = DateTime(date.year, date.month, date.day, toDate.hour, toDate.minute);
+    }
+
+    setState(() {
+      fromDate = date;
+    });
+  }
+
+  Future selectToDateTime({required bool selectDate}) async {
+    final date = await selectDateTime(toDate, selectDate: selectDate, firstDate: selectDate ? fromDate : null);
+
+    if(date == null) return;
+
+    setState(() {
+      toDate = date;
+    });
+  }
+
+  Future<DateTime?> selectDateTime(DateTime initialDate,
+      {required bool selectDate, DateTime? firstDate}) async {
+    if (selectDate) {
+      final date = await showDatePicker(
+          context: context,
+          initialDate: initialDate,
+          firstDate: firstDate ?? DateTime.now(),
+          lastDate: DateTime(2101));
+      if (date == null) return null;
+      final time =
+          Duration(hours: initialDate.hour, minutes: initialDate.minute);
+      return date.add(time);
+    } else {
+      final timeOfDay = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.fromDateTime(initialDate)
+      );
+      if (timeOfDay == null) return null;
+      final date = DateTime(initialDate.year, initialDate.month, initialDate.day);
+      final time = Duration(hours: timeOfDay.hour, minutes: timeOfDay.minute);
+      return date.add(time);
+    }
+  }
+
+
+
   // Dropdown widget
-  Widget dropdownButton({text: String}) {
-    return Column();
+  Widget dropdownButton({
+    required String text,
+    required VoidCallback onClicked,
+  }) {
+    return ListTile(
+      title: Text(text),
+      trailing: Icon(Icons.arrow_drop_down),
+      onTap: onClicked,
+    );
+  }
+
+  //TODO: Finish the multiple input logic
+  Widget emailInput(String label, Color color) {
+    return TextField(
+      keyboardType: TextInputType.emailAddress,
+      decoration: InputDecoration(
+        border: UnderlineInputBorder(),
+        labelText: 'Guests E-mail',
+        prefixIcon: Icon(Icons.mail),
+      ),
+      controller: _emailController,
+      focusNode: focus,
+      onChanged: (String val) {
+        setState(() {
+          if (val != lastValue) {
+            lastValue = val;
+            if (val.endsWith(' ') && validateEmail(val.trim())) {
+              if (!emails.contains(val.trim())) {
+                emails.add(val.trim());
+              }
+              _emailController.clear();
+            } else if (val.endsWith(' ') && !validateEmail(val.trim())) {
+              _emailController.clear();
+            }
+          }
+        });
+      },
+      onEditingComplete: () {
+        updateEmails();
+        print(this.emails);
+      },
+    );
+  }
+
+  updateEmails() {
+    setState(() {
+      if (validateEmail(_emailController.text)) {
+        if (!emails.contains(_emailController.text)) {
+          emails.add(_emailController.text.trim());
+        }
+        _emailController.clear();
+      } else if (!validateEmail(_emailController.text)) {
+        _emailController.clear();
+      }
+    });
+  }
+
+  setEmails(List<String> emails) {
+    this.emails = emails;
+  }
+
+
+  Widget buildHeader({required Widget child, required String headerTitle}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(headerTitle, style: TextStyle(fontWeight: FontWeight.bold)),
+          child
+        ],
+      ),
+    );
+  }
+
+  bool validateEmail(String value) {
+    bool emailValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(value);
+    return emailValid;
   }
 
   // Save button widget
