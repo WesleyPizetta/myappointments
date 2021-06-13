@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Building a model for events
 class EventModel {
   final String eventName;
   final String eventDescription;

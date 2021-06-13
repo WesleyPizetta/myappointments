@@ -10,18 +10,17 @@ class CalendarWidget extends StatefulWidget {
 }
 
 class _CalendarWidgetState extends State<CalendarWidget> {
-  final CalendarController _calendarController = CalendarController();
+  final CalendarController _calendarController = CalendarController(); //creating the Calendar Controller
 
   @override
   void initState() {
-    _calendarController.view = CalendarView.week;
+    _calendarController.view = CalendarView.week; //initialize the calendar view from _calendarController
     super.initState();
   }
 
+  //Building the entire calendar. Using some widgets to make it better for a future maintenance and make it better to read
   @override
   Widget build(BuildContext context) {
-    double _displayWidth = MediaQuery.of(context).size.width;
-    double _displayHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(title: Text('Schedule')),
       body: Center(
@@ -31,12 +30,13 @@ class _CalendarWidgetState extends State<CalendarWidget> {
         child: Icon(Icons.add, color: Colors.white),
         backgroundColor: Colors.blueGrey,
         onPressed: () => {Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => EventSchedule())
+          MaterialPageRoute(builder: (context) => EventSchedule()) //EventSchedule is the page where we're going to write all the code for an event creation
         )},
       ),
     );
   }
 
+  //Renders the calendar by using the SfCalendar widget from SyncFusion Calendar package
   Widget renderCalendar(BuildContext context) {
     return SfCalendar(
       controller: _calendarController,

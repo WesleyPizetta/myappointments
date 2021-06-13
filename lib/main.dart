@@ -7,18 +7,9 @@ void main() {
   runApp(AgendaApp());
 }
 
-class AgendaApp extends StatefulWidget {
- const AgendaApp ({Key? key}) : super(key:key);
-
-  @override
-  _AgendaAppState createState() => _AgendaAppState();
-}
-
-class _AgendaAppState extends State<AgendaApp> {
+class AgendaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-
-
     return MaterialApp(
       themeMode: ThemeMode.dark,
       darkTheme: ThemeData.dark().copyWith(
@@ -27,7 +18,7 @@ class _AgendaAppState extends State<AgendaApp> {
         primaryColor: Colors.blueGrey
       ),
       title: 'Schedule',
-      home: CalendarWidget()
+      home: CalendarWidget() //Call the widget that renders the Calendar
     );
   }
 }
