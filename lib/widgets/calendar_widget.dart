@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_agenda/provider/event_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:flutter_agenda/pages/event_schedule_page.dart';
+import '../models/event_data_source.dart';
 
 class CalendarWidget extends StatefulWidget {
   const CalendarWidget({Key? key}) : super(key: key);
@@ -14,7 +17,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
   @override
   void initState() {
-    _calendarController.view = CalendarView.week; //initialize the calendar view from _calendarController
+    _calendarController.view = CalendarView.month; //initialize the calendar view from _calendarController
     super.initState();
   }
 
@@ -38,7 +41,9 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
   //Renders the calendar by using the SfCalendar widget from SyncFusion Calendar package
   Widget renderCalendar(BuildContext context) {
+    final events = Provider.of<EventProvider>(context).events;
     return SfCalendar(
+      dataSource: EventDataSource(events),
       controller: _calendarController,
       onViewChanged: (ViewChangedDetails details) {
         List<DateTime> dates = details.visibleDates;

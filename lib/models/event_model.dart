@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class EventModel {
   final String eventName;
   final String eventDescription;
-  final List<String> guestsEmail;
+  final String guestsEmail;
   final DateTime from;
   final DateTime to;
   final Color backgroundColor;

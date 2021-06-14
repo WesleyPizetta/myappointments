@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_agenda/models/event_model.dart';
 import '../utils.dart' as Utils;
+import '../provider/event_provider.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 class EventSchedule extends StatefulWidget {
@@ -14,8 +17,8 @@ class EventSchedule extends StatefulWidget {
 class _EventScheduleState extends State<EventSchedule> {
   final _formKey = GlobalKey<FormState>(); // Key for the form validation
   final _titleController =
-      TextEditingController(); //
-  final _emailController = TextEditingController();// A controller for the title input
+  TextEditingController(); //
+  final _emailController = TextEditingController(); // A controller for the title input
   String lastValue = '';
   List<String> emails = [];
   FocusNode focus = FocusNode();
@@ -64,7 +67,6 @@ class _EventScheduleState extends State<EventSchedule> {
               SizedBox(
                 width: 12,
               ),
-              emailInput('wesleypizetta@hotmail.com', Color(0xFFff6666))
             ],
           ),
         ),
@@ -81,8 +83,9 @@ class _EventScheduleState extends State<EventSchedule> {
         labelText: 'Type your event title',
         prefixIcon: Icon(Icons.text_fields),
       ),
-      onFieldSubmitted: (_) {},
-      validator: (title) => title != null && title.isEmpty
+      onFieldSubmitted: (_) => saveForm(),
+      validator: (title) =>
+      title != null && title.isEmpty
           ? 'Please, assign a title to your event'
           : null,
       controller: _titleController,
@@ -122,10 +125,12 @@ class _EventScheduleState extends State<EventSchedule> {
         child: Row(children: [
           Expanded(
             flex: 2,
-            child: dropdownButton(text: Utils.toDate(toDate), onClicked: () => selectToDateTime(selectDate: true)),
+            child: dropdownButton(text: Utils.toDate(toDate),
+                onClicked: () => selectToDateTime(selectDate: true)),
           ),
           Expanded(
-            child: dropdownButton(text: Utils.toTime(toDate), onClicked: () => selectToDateTime(selectDate: false)),
+            child: dropdownButton(text: Utils.toTime(toDate),
+                onClicked: () => selectToDateTime(selectDate: false)),
           )
         ]));
   }
@@ -133,10 +138,11 @@ class _EventScheduleState extends State<EventSchedule> {
   Future selectFromDateTime({required bool selectDate}) async {
     final date = await selectDateTime(fromDate, selectDate: selectDate);
 
-    if(date == null) return;
+    if (date == null) return;
 
-    if(date.isAfter(toDate)) {
-      toDate = DateTime(date.year, date.month, date.day, toDate.hour, toDate.minute);
+    if (date.isAfter(toDate)) {
+      toDate =
+          DateTime(date.year, date.month, date.day, toDate.hour, toDate.minute);
     }
 
     setState(() {
@@ -145,9 +151,10 @@ class _EventScheduleState extends State<EventSchedule> {
   }
 
   Future selectToDateTime({required bool selectDate}) async {
-    final date = await selectDateTime(toDate, selectDate: selectDate, firstDate: selectDate ? fromDate : null);
+    final date = await selectDateTime(toDate, selectDate: selectDate,
+        firstDate: selectDate ? fromDate : null);
 
-    if(date == null) return;
+    if (date == null) return;
 
     setState(() {
       toDate = date;
@@ -164,7 +171,7 @@ class _EventScheduleState extends State<EventSchedule> {
           lastDate: DateTime(2101));
       if (date == null) return null;
       final time =
-          Duration(hours: initialDate.hour, minutes: initialDate.minute);
+      Duration(hours: initialDate.hour, minutes: initialDate.minute);
       return date.add(time);
     } else {
       final timeOfDay = await showTimePicker(
@@ -172,12 +179,12 @@ class _EventScheduleState extends State<EventSchedule> {
           initialTime: TimeOfDay.fromDateTime(initialDate)
       );
       if (timeOfDay == null) return null;
-      final date = DateTime(initialDate.year, initialDate.month, initialDate.day);
+      final date = DateTime(
+          initialDate.year, initialDate.month, initialDate.day);
       final time = Duration(hours: timeOfDay.hour, minutes: timeOfDay.minute);
       return date.add(time);
     }
   }
-
 
 
   // Dropdown widget
@@ -256,17 +263,40 @@ class _EventScheduleState extends State<EventSchedule> {
     );
   }
 
+  Future saveForm() async {
+    final isValid = _formKey.currentState!.validate();
+
+    if (isValid) {
+      final event = EventModel(
+          eventName: _titleController.text,
+          eventDescription: 'Description',
+          guestsEmail: _emailController.text,
+          to: toDate,
+          from: fromDate,
+          isAllDay: false
+      );
+
+      final provider = Provider.of<EventProvider>(context, listen: false);
+      provider.addEvent(event);
+
+      Navigator.of(context).pop();
+    }
+  }
+
   bool validateEmail(String value) {
-    bool emailValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(value);
+    bool emailValid = RegExp(
+        r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+        .hasMatch(value);
     return emailValid;
   }
 
   // Save button widget
-  List<Widget> buildEventActions() => [
+  List<Widget> buildEventActions() =>
+      [
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
               primary: Colors.transparent, shadowColor: Colors.transparent),
-          onPressed: () {},
+          onPressed: saveForm,
           icon: Icon(Icons.done),
           label: Text('Save'),
         )
