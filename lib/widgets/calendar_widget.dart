@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:flutter_agenda/pages/event_schedule_page.dart';
 import '../models/event_data_source.dart';
+import 'tasks_widget.dart';
 
 class CalendarWidget extends StatefulWidget {
   const CalendarWidget({Key? key}) : super(key: key);
@@ -44,6 +45,15 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     final events = Provider.of<EventProvider>(context).events;
     return SfCalendar(
       dataSource: EventDataSource(events),
+      initialSelectedDate: DateTime.now(),
+      onLongPress: (details) {
+        final provider = Provider.of<EventProvider>(context, listen: false);
+
+        provider.setDate(details.date!);
+        showModalBottomSheet(
+            context: context,
+            builder: (context) => TasksWidget());
+      },
       controller: _calendarController,
       onViewChanged: (ViewChangedDetails details) {
         List<DateTime> dates = details.visibleDates;
